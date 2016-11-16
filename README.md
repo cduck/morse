@@ -11,13 +11,20 @@ $ echo "Morse code message." |python3 play.py -f 750 --wpm 10
 ```
 $ echo "Morse code message." |python3 play.py -f 750 --wpm 10 -o output.wav
 ```
-Output: [output.wav](output.wav)
+Output: [output.wav](https://raw.githubusercontent.com/cduck/morse/master/output.wav) ([converted to mp3](https://raw.githubusercontent.com/cduck/morse/master/output.mp3))
 
 ###Translate to just `.` and `-` characters:
 ```
 $ echo "Morse code message." |python3 morse.py
 -- --- .-. ... .   -.-. --- -.. .   -- . ... ... .- --. . .-.-.-
 ```
+
+## Other audio formats
+###Convert to mp3 or other formats with [FFmpeg](http://www.ffmpeg.org/):
+```
+ffmpeg -i output.wav output.mp3
+```
+Output: [output.mp3](https://raw.githubusercontent.com/cduck/morse/master/output.mp3)
 
 ## Dependencies
 - [Python 3](http://www.python.org/)
