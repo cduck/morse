@@ -31,7 +31,7 @@ def main(message, freq, wpm, fs, prompt, outFile):
             letterPrompts=letterNames if prompt else None, promptVolume=0.3)
   audio /= 2
   if outFile:
-    io.wavfile.write(outFile, sps, audio)
+    io.wavfile.write(outFile, sps, (audio * 2**15).astype(np.int16))
   else:
     playBlock(audio, sps)
     time.sleep(0.1)
