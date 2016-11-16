@@ -1,0 +1,7 @@
+__pycache__
+*.pyc
+.DS_Store
+/audio/letter-names
+/output
+/text
+
