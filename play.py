@@ -25,7 +25,16 @@ def main(message, freq, wpm, fs, prompt, outFile):
     sps = letterNames[LETTERS[0]][0]
   else:
     sps = SPS
-  print('SPS =', sps)
+  print('Audio samples per second =', sps)
+  print('Tone period     =', round(1000/freq, 1), 'ms')
+
+  dps = morse.wpmToDps(wpm)  # Dots per second
+  mspd = 1000/dps  # Dot duration in milliseconds
+  farnsworthScale = morse.farnsworthScaleFactor(wpm, fs)
+  print('Dot width       =', round(mspd, 1), 'ms')
+  print('Dash width      =', int(round(mspd * morse.DASH_WIDTH)), 'ms')
+  print('Character space =', int(round(mspd * morse.CHAR_SPACE * farnsworthScale)), 'ms')
+  print('Word space      =', int(round(mspd * morse.WORD_SPACE * farnsworthScale)), 'ms')
 
   # Compute morse code audio from plain text
   audio = stringToMorseAudio(message, sps, wpm, fs, freq, 0.5,
