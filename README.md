@@ -19,6 +19,12 @@ $ echo "Morse code message." |python3 morse.py
 -- --- .-. ... .   -.-. --- -.. .   -- . ... ... .- --. . .-.-.-
 ```
 
+### Learn Morse code using Koch's method
+Play a random sequence of 100 A, T, and R letters
+```
+$ ./koch.py --wpm=30 --fs=10 -l 100 "ATR"
+```
+
 ## Other audio formats
 ###Convert to mp3 or other formats with [FFmpeg](http://www.ffmpeg.org/):
 ```
