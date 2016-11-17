@@ -15,6 +15,7 @@ FREQ = 750
 WPM = 25
 FS = 10
 AUDIO_PADDING = 0.5  # Seconds
+CLICK_SMOOTH = 2  # Tone periods
 
 
 def main(message, freq, wpm, fs, prompt, outFile):
@@ -50,18 +51,22 @@ def addAudio(base, new, offset):
 
 def boolArrToSwitchedTone(boolArr, freq, sps, volume=1.0):
   ''' Create the tone audio from a bool array representation of morse code. '''
-  weightLen = int(3*sps/freq)
+  weightLen = int(CLICK_SMOOTH*sps/freq)
   if weightLen % 2 == 0:
     weightLen += 1  # Make sure the weight array is odd length
-  smoothingWeights = np.ones(weightLen)
+  smoothingWeights = np.concatenate((np.arange(1, weightLen//2+1), np.arange(weightLen//2+1, 0, -1)))
+  smoothingWeights = smoothingWeights / np.sum(smoothingWeights)
   numSamplesPadding = int(sps*AUDIO_PADDING) + int((weightLen-1)/2)
   padding = np.zeros(numSamplesPadding, dtype=np.bool)
   boolArr = np.concatenate((padding, boolArr, padding)).astype(np.float32)
-  smoothBoolArr = np.correlate(boolArr, smoothingWeights, 'valid')
-  numSamples = len(boolArr)
+  if CLICK_SMOOTH <= 0:
+    smoothBoolArr = boolArr
+  else:
+    smoothBoolArr = np.correlate(boolArr, smoothingWeights, 'valid')
+  numSamples = len(smoothBoolArr)
   x = np.arange(numSamples)
   toneArr = np.sin(x * (freq*2*np.pi/sps)) * volume
-  toneArr[boolArr == False] = 0
+  toneArr *= smoothBoolArr
   return toneArr
 def stringToMorseAudio(message, sps=SPS, wpm=WPM, fs=FS, freq=FREQ, volume=1.0, letterPrompts=None, promptVolume=1.0):
   message = message.upper()
