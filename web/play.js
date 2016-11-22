@@ -12,7 +12,7 @@ var oscillator;
 
 var audioBufferDuration = 0.2;
 var audioBufferUpdate = 0.05;
-var toneSmoothTime = 0.04;
+var toneSmoothTime = 0.003;
 var pauseSmoothTime = 0.5;
 var frequency = 750;  // Default frequency
 var pan = 0;
@@ -329,9 +329,9 @@ function scheduleBeep(t, dur) {
   g.connect(pauseGain);
   o.start(t);
   g.gain.setValueAtTime(1, t);
-  g.gain.setValueAtTime(1, t+dur);
-  g.gain.exponentialRampToValueAtTime(0.00001, t+dur+toneSmoothTime);
-  o.stop(t+dur+toneSmoothTime);
+  g.gain.setValueAtTime(1, t+dur-toneSmoothTime/2);
+  g.gain.linearRampToValueAtTime(0.00001, t+dur+toneSmoothTime/2);
+  o.stop(t+dur+toneSmoothTime/2);
 }
 function scheduleTimeArr(t, timeArr) {
   timeArr.forEach(function(timing) {
