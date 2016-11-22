@@ -52,5 +52,15 @@
 
 <pre id="log" style="display:none">Log:</pre>
 
+<!-- Floating tools -->
+<div style="position:fixed; bottom:0; width:100%; background: white; margin:0; padding:0; margin-left:-10px; padding-left:10px; border:none; border-top:1px solid black"><p style="margin-top:.5em; margin-bottom:.5em">
+  <button onclick="playMorse()">Play</button>
+  <button onclick="pauseMorse()">Pause</button>
+  <br>
+  Navigate: <input type="number" id="navText" step="1" oninput="navTextChange()">
+            <input type="range" id="navSlider" min="0" max="10" step="1" style="width:500px" oninput="navSliderChange()">
+            <span id="navMax"></span>
+</p></div>
+
 </body>
 </html>

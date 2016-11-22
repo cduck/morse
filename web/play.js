@@ -44,6 +44,7 @@ function initPlay() {
   loadSavedMessage();
   indexMessageForHighlight();
   highlightLetterIndex(currentIndex);
+  updateNavControls();
 }
 function initExtraStyle() {
   var style = document.createElement("style");
@@ -227,6 +228,39 @@ function loadSavedFs() {
   document.getElementById("fsText").value = fs;
 }
 
+// Navigation controls
+function navTextChange() {
+  var f = parseFloat(document.getElementById("navText").value);
+  document.getElementById("navSlider").value = f;
+  setNav(f);
+}
+function navSliderChange() {
+  var f = parseFloat(document.getElementById("navSlider").value);
+  document.getElementById("navText").value = f;
+  setNav(f);
+}
+function setNav(f) {
+  currentIndex = f;
+  saveCurrentIndex();
+  highlightLetterIndex(currentIndex);
+}
+function updateNavControls() {
+  if (!playingMessage) {
+    var slider = document.getElementById("navSlider");
+    slider.max = 0;
+    slider.value = 0;
+    document.getElementById("navText").value = "";
+    document.getElementById("navMax").innerText = "--";
+  } else {
+    var maxVal = playingMessage.length-1;
+    var slider = document.getElementById("navSlider");
+    slider.max = maxVal;
+    slider.value = currentIndex;
+    document.getElementById("navText").value = currentIndex;
+    document.getElementById("navMax").innerText = maxVal+"";
+  }
+}
+
 // Saved message index
 function loadCurrentIndex() {
   if (typeof localStorage.currentIndex == "string") {
@@ -319,10 +353,12 @@ function bufferAudio() {
       playing = false;
       currentIndex = 0;
       highlightLetterIndex(currentIndex);
+      updateNavControls();
       return;  // Done playing
     }
     nextStartTime = scheduleMorseChar(nextStartTime, currentIndex);
     highlightLetterIndex(currentIndex);
+    updateNavControls();
     saveCurrentIndex();
     currentIndex++;
   }
@@ -339,6 +375,8 @@ function playMorse() {
     currentIndex--;
   }
   nextStartTime = context.currentTime + 0.1;
+
+  updateNavControls();
 
   playing = true;
   bufferAudio();
