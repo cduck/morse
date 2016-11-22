@@ -1,6 +1,8 @@
 # Morse code audio generation tool
 This tool can either play morse code directly or save to a WAV file.  It translates plain text from stdin or the command line.  The tone frequency, words per minute, and Farnsworth timing are also configurable through command line arguments.  It should work on Mac, Linux, and Windows but has only been tested to play audio on Mac.
 
+There is also a HTML5 version live [here](https://cduck.github.io/morse/web/play.html).
+
 ## Usage
 ###Playing sound:
 ```
@@ -31,6 +33,7 @@ $ ./koch.py --wpm=30 --fs=10 -l 100 "ATR"
 ffmpeg -i output.wav output.mp3
 ```
 Output: [output.mp3](https://raw.githubusercontent.com/cduck/morse/master/output.mp3)
+
 
 ## Dependencies
 - [Python 3](http://www.python.org/)
