@@ -1,0 +1,56 @@
+<html>
+<head>
+  <title>Play Morse Code</title>
+  <script src="morseTable.js"></script>
+  <script src="morse.js"></script>
+  <script src="play.js"></script>
+</head>
+<body>
+
+<h1 id="supportError" style="display:none">The Web Audio API is not supported in this browser.</h1>
+
+<p>
+  <!--<audio loop muted id="player" style="display:none">
+    <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" type="audio/mp3">
+    This browser doesn't support the audio element.
+  </audio>-->
+  <button onclick="playMorse()">Play</button>
+  <button onclick="pauseMorse()">Pause</button>
+  <button onclick="restartMorse()">Restart</button>
+  <br>
+  Frequency: <button onclick="frequencyButtonPress(700)">700Hz</button>
+             <button onclick="frequencyButtonPress(750)">750Hz</button>
+             <button onclick="frequencyButtonPress(800)">800Hz</button>
+             <input type="number" id="freqText" oninput="frequencyTextChange()">
+             <input type="range" id="freqSlider" min="2" max="4" step="0.0001" style="width:500px" oninput="frequencySliderChange()">
+  <br>
+  Pan: <input type="number" id="panText" step="0.1" oninput="panTextChange()">
+       <input type="range" id="panSlider" min="-1" max="1" step="0.01" style="width:200px" oninput="panSliderChange()">
+  <br>
+  Volume: <input type="number" id="volText" step="0.1" oninput="volumeTextChange()">
+          <input type="range" id="volSlider" min="0" max="2" step="0.01" style="width:200px" oninput="volumeSliderChange()">
+  <br>
+  WPM: <input type="number" id="wpmText" oninput="wpmTextChange()">
+       <input type="range" id="wpmSlider" min="15" max="50" step="1" style="width:200px" oninput="wpmSliderChange()">
+  <br>
+  FS: <input type="number" id="fsText" oninput="fsTextChange()">
+      <input type="range" id="fsSlider" min="2" max="50" step="1" style="width:200px" oninput="fsSliderChange()">
+</p>
+
+<p>
+  <button id="enableBackground" onclick="enableMobileBackgroundAudio()">Enable background audio</button>
+  <button id="disableBackground" onclick="disableMobileBackgroundAudio()" style="display:none">Disable background audio</button>
+  <br>
+  Load text from file: <input id="file" type="file" onchange="loadMessageFile()">
+</p>
+<h3>Text to play:</h3>
+<p contenteditable id="messageArea">
+  Type a message here.
+</p>
+
+<div style="height:3em"></div>
+
+<pre id="log" style="display:none">Log:</pre>
+
+</body>
+</html>
