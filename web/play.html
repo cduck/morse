@@ -1,11 +1,14 @@
 <html>
 <head>
   <title>Play Morse Code</title>
+  <meta name="viewport" content="width=230, initial-scale=1">
   <script src="morseTable.js"></script>
   <script src="morse.js"></script>
   <script src="play.js"></script>
 </head>
-<body>
+<body style="margin:0; padding:0">
+<div style="padding:1em; padding-top:0.5em; padding-bottom:10em">
+
 
 <h1 id="supportError" style="display:none">The Web Audio API is not supported in this browser.</h1>
 
@@ -22,7 +25,7 @@
              <button onclick="frequencyButtonPress(750)">750Hz</button>
              <button onclick="frequencyButtonPress(800)">800Hz</button>
              <input type="number" id="freqText" oninput="frequencyTextChange()">
-             <input type="range" id="freqSlider" min="2" max="4" step="0.0001" style="width:500px" oninput="frequencySliderChange()">
+             <input type="range" id="freqSlider" min="2" max="4" step="0.0001" style="width:200px" oninput="frequencySliderChange()">
   <br>
   Pan: <input type="number" id="panText" step="0.1" oninput="panTextChange()">
        <input type="range" id="panSlider" min="-1" max="1" step="0.01" style="width:200px" oninput="panSliderChange()">
@@ -48,19 +51,27 @@
   Type a message here.
 </p>
 
-<div style="height:3em"></div>
-
 <pre id="log" style="display:none">Log:</pre>
 
+
+</div>
+
 <!-- Floating tools -->
-<div style="position:fixed; bottom:0; width:100%; background: white; margin:0; padding:0; margin-left:-10px; padding-left:10px; border:none; border-top:1px solid black"><p style="margin-top:.5em; margin-bottom:.5em">
-  <button onclick="playMorse()">Play</button>
-  <button onclick="pauseMorse()">Pause</button>
-  <br>
-  Navigate: <input type="number" id="navText" step="1" oninput="navTextChange()">
-            <input type="range" id="navSlider" min="0" max="10" step="1" style="width:500px" oninput="navSliderChange()">
-            <span id="navMax"></span>
-</p></div>
+<div style="position:fixed; bottom:0; width:100%; background: white; margin:0; padding:0; padding-left:10%; padding-right:10%; border:none; border-top:1px solid black">
+<div style="width:80%; text-align:left">
+  <div style="width:100%; margin:0; margin-bottom:0.2em; margin-top:0.2em">
+    <button onclick="playMorse()">Play</button>
+    <button onclick="pauseMorse()">Pause</button>
+  </div>
+  <div style="width:100%; margin:0; margin-top:0.3; margin-bottom:0.3em">
+            <div id="navMax" style="float:right; right:0"></div>
+            <div style="width:auto; overflow:hidden">Navigate: <input type="number" id="navText" step="1" oninput="navTextChange()"></div>
+  </div>
+  <div style="width:100%; text-align:center; margin-bottom:1.5em">
+    <input type="range" id="navSlider" min="0" max="10" step="1" style="width:100%" oninput="navSliderChange()">
+  </div>
+</div>
+</div>
 
 </body>
 </html>

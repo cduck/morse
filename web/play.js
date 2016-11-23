@@ -10,10 +10,13 @@ var volGain;
 var pauseGain;
 var oscillator;
 
-var audioBufferDuration = 0.2;
+var audioBufferDurationDefault = 0.1;
+var audioBufferDurationBackground = 2;  // Chrome and other browsers throttle timer updates
+                                        // to once a second or less often in the background
 var audioBufferUpdate = 0.05;
+var highlightEarlyFactor = 0.9;  // [0 to 1] Fraction of the letter gap time to highlight before the letter plays
 var toneSmoothTime = 0.003;
-var pauseSmoothTime = 0.5;
+var pauseSmoothTime = 0.2;
 var frequency = 750;  // Default frequency
 var pan = 0;
 var volume = 1;
@@ -21,9 +24,14 @@ var wpm = 35;  // Words per minute
 var fs = 6;  // Farnsworth speed
 var playingMessage = null;
 var currentIndex = 0;
+var highlightBuffer = [];
 
+var audioBufferDuration = audioBufferDurationDefault;
 var nextStartTime = 0;
 var playing = false;
+var ignoreNextPause = false;
+
+var mp3Uri = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjM2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6v////////////////////////////////8AAAAATGF2YzU2LjQxAAAAAAAAAAAAAAAAJAAAAAAAAAAAASDs90hvAAAAAAAAAAAAAAAAAAAA//MUZAAAAAGkAAAAAAAAA0gAAAAATEFN//MUZAMAAAGkAAAAAAAAA0gAAAAARTMu//MUZAYAAAGkAAAAAAAAA0gAAAAAOTku//MUZAkAAAGkAAAAAAAAA0gAAAAANVVV";
 
 
 window.addEventListener('load', initPlay, false);
@@ -37,7 +45,7 @@ function initPlay() {
 
   loadSavedFrequency();
   loadSavedPan();
-  loadSavedVolume();
+  loadSavedVolume(true);
   loadSavedWpm();
   loadSavedFs();
   loadCurrentIndex();
@@ -79,21 +87,31 @@ function enableMobileBackgroundAudio() {
   document.getElementById("enableBackground").style.display = "none";
   document.getElementById("disableBackground").style.display = "";
   if (!fakePlayer) {
+    if (playing) ignoreNextPause = true;
     fakePlayer = new Audio();
     fakePlayer.loop = true;
     fakePlayer.muted = true;
+    //fakePlayer.src = mp3Uri;
     fakePlayer.onplay = playMorse();
     fakePlayer.onpause = pauseMorse();
     document.body.appendChild(fakePlayer);
+    //fakePlayer.play();
+    if (playing) setTimeout(function() {ignoreNextPause = false;}, 100);
   }
+  audioBufferDuration = audioBufferDurationBackground;
+  context.resume();
 }
 function disableMobileBackgroundAudio() {
   document.getElementById("enableBackground").style.display = "";
   document.getElementById("disableBackground").style.display = "none";
   if (fakePlayer) {
+    fakePlayer.onplay = null;
+    fakePlayer.onpause = null;
+    //fakePlayer.pause();
     fakePlayer.parentNode.removeChild(fakePlayer);
     fakePlayer = null;
   }
+  audioBufferDuration = audioBufferDurationDefault;
 }
 
 
@@ -173,13 +191,13 @@ function setVolume(f) {
   localStorage.volume = f+"";
   setOscillatorVolume(f);
 }
-function loadSavedVolume() {
+function loadSavedVolume(initial) {
   if (typeof localStorage.volume == "string") {
     volume = parseFloat(localStorage.volume);
   }
   document.getElementById("volSlider").value = volume;
   document.getElementById("volText").value = volume;
-  setOscillatorVolume(volume);
+  setOscillatorVolume(volume, initial);
 }
 
 // Words per minute setting
@@ -244,7 +262,8 @@ function setNav(f) {
   saveCurrentIndex();
   highlightLetterIndex(currentIndex);
 }
-function updateNavControls() {
+function updateNavControls(index) {
+  if (index === undefined) index = currentIndex;
   if (!playingMessage) {
     var slider = document.getElementById("navSlider");
     slider.max = 0;
@@ -255,8 +274,8 @@ function updateNavControls() {
     var maxVal = playingMessage.length-1;
     var slider = document.getElementById("navSlider");
     slider.max = maxVal;
-    slider.value = currentIndex;
-    document.getElementById("navText").value = currentIndex;
+    slider.value = index;
+    document.getElementById("navText").value = index;
     document.getElementById("navMax").innerText = maxVal+"";
   }
 }
@@ -276,12 +295,15 @@ function saveCurrentIndex() {
 function loadMessageFile() {
   var input = document.getElementById("file");
   if (input.files.length >= 1) {
+    pauseMorse();
     var file = input.files[0];
     var reader = new FileReader();
     reader.onload = function (e) {
       messageArea.innerText = e.target.result;
     };
     reader.readAsText(file);
+    currentIndex = 0;
+    saveCurrentIndex();
   }
 }
 function loadSavedMessage() {
@@ -305,7 +327,13 @@ function appendLog(message) {
 // Letter highlighting
 function highlightLetterIndex(i) {
   extraStyle.deleteRule(0);
-  extraStyle.insertRule("#messageArea span:nth-of-type("+(i+1)+") {color: red}", 0);
+  var style = "{background:#FFDD00}";
+  if (playingMessage) {
+    if (playingMessage[i] == '\n') {
+      style = "{background:#FFDD00; padding-left:0.4em;}";
+    }
+  }
+  extraStyle.insertRule("#messageArea > span:nth-of-type("+(i+1)+") "+style, 0);
 }
 function indexMessageForHighlight() {
   var m = messageArea.innerText;
@@ -328,10 +356,12 @@ function scheduleBeep(t, dur) {
   o.connect(g);
   g.connect(pauseGain);
   o.start(t);
-  g.gain.setValueAtTime(1, t);
-  g.gain.setValueAtTime(1, t+dur-toneSmoothTime/2);
-  g.gain.linearRampToValueAtTime(0.00001, t+dur+toneSmoothTime/2);
-  o.stop(t+dur+toneSmoothTime/2);
+  g.gain.value = 0;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(1, t+toneSmoothTime);
+  g.gain.setValueAtTime(1, t+dur);
+  g.gain.linearRampToValueAtTime(0, t+dur+toneSmoothTime);
+  o.stop(t+dur+toneSmoothTime);
 }
 function scheduleTimeArr(t, timeArr) {
   timeArr.forEach(function(timing) {
@@ -348,25 +378,52 @@ function bufferAudio() {
 
   var t = context.currentTime;
   var dur;
-  while (nextStartTime <= t + audioBufferDuration) {
+  var highlightEarly = calcHightlightEarly();
+  var forward = Math.max(highlightEarly, audioBufferDuration);
+  while (nextStartTime <= t + forward) {
     if (currentIndex >= playingMessage.length) {
       playing = false;
       currentIndex = 0;
-      highlightLetterIndex(currentIndex);
-      updateNavControls();
+      pushHighlightBuffer(nextStartTime, currentIndex);
       return;  // Done playing
     }
+    pushHighlightBuffer(nextStartTime, currentIndex);
     nextStartTime = scheduleMorseChar(nextStartTime, currentIndex);
-    highlightLetterIndex(currentIndex);
-    updateNavControls();
     saveCurrentIndex();
     currentIndex++;
   }
   setTimeout(bufferAudio, audioBufferUpdate);
 }
+function pushHighlightBuffer(t, i) {
+  highlightBuffer.push([t, i]);
+}
+function drawHighlights() {
+  if (!playing) return;
+
+  requestAnimationFrame(drawHighlights);
+
+  var highlightEarly = calcHightlightEarly();
+
+  var t = context.currentTime;
+  var i = null;
+  while (highlightBuffer.length > 0 && highlightBuffer[0][0] <= t+highlightEarly) {
+    i = highlightBuffer.shift()[1];
+  }
+  if (i !== null) {
+    highlightLetterIndex(i);
+    updateNavControls(i);
+  }
+}
+function calcHightlightEarly() {
+  var farnsworthScale = farnsworthScaleFactor(wpm, fs);
+  var sbLetter = 1/wpmToDps(wpm) * CHAR_SPACE * farnsworthScale;
+  return sbLetter * highlightEarlyFactor;
+}
 
 
 function playMorse() {
+  if (playing) return;
+
   indexMessageForHighlight();
   saveMessageText();
   playingMessage = messageArea.innerText;
@@ -380,23 +437,25 @@ function playMorse() {
 
   playing = true;
   bufferAudio();
+  highlightBuffer = [];
+  drawHighlights();
 
-  if (fakePlayer) {
-  //  fakePlayer.play();
-  }
   appendLog("Play");
 }
 function pauseMorse() {
-  var t = context.currentTime;
+  if (ignoreNextPause) {
+    ignoreNextPause = false;
+    return;
+  }
+
   if (pauseGain) {
-    pauseGain.gain.setValueAtTime(1, t);
-    pauseGain.gain.exponentialRampToValueAtTime(0.00001, t+pauseSmoothTime);
+    var t = context.currentTime;
+    //pauseGain.gain.setValueAtTime(1, t);
+    pauseGain.gain.linearRampToValueAtTime(0, t+pauseSmoothTime);
     pauseGain = null;
   }
   playing = false;
-  if (fakePlayer) {
-  //  fakePlayer.pause();
-  }
+
   appendLog("Pause");
 }
 function restartMorse() {
@@ -417,11 +476,16 @@ function setOscillatorPan(p) {
     panNode.pan.value = p;
   }
 }
-function setOscillatorVolume(v) {
-  if (v <= 0) v = 0.00001;
-  volGain.gain.exponentialRampToValueAtTime(
-    v, context.currentTime + 0.04
-  );
+function setOscillatorVolume(v, initial) {
+  if (v <= 0.01) v = 0;
+  var ve = Math.pow(2,v)-1;
+  if (initial) {
+    volGain.gain.value = ve;
+  } else {
+    volGain.gain.linearRampToValueAtTime(
+      ve, context.currentTime + 0.01
+    );
+  }
 }
 
 
